@@ -10,7 +10,7 @@ from typing import Tuple
 
 import torch
 import numpy as np
-from transformers import LlamaTokenizer, GenerationConfig, LlamaConfig
+from transformers import AutoTokenizer, GenerationConfig, LlamaConfig
 from LLMPruner.models.hf_llama.modeling_llama import LlamaForCausalLM, LlamaRMSNorm, LlamaAttention, LlamaMLP
 
 import LLMPruner.torch_pruning as tp 
@@ -36,7 +36,7 @@ def main(args):
         setup_sublogger=True
     )
 
-    tokenizer = LlamaTokenizer.from_pretrained(args.base_model)
+    tokenizer = AutoTokenizer.from_pretrained(args.base_model)
     model = LlamaForCausalLM.from_pretrained(
         args.base_model,
         low_cpu_mem_usage=True if args.torch_version >=1.9 else False
@@ -98,7 +98,9 @@ def main(args):
             "global_pruning": args.global_pruning,
             "iterative_steps": args.iterative_steps,
             "ch_sparsity": args.pruning_ratio, 
-            "ignored_layers":[],
+            "ignored_layers":[
+                layer.self_attn for layer in model.model.layers
+            ],
             "channel_groups": {
             },
             "consecutive_groups": {
